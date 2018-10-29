@@ -29,8 +29,8 @@ public class FiveStarsDialog implements DialogInterface.OnClickListener {
     private static final String SP_DISABLED = "disabled";
     private static final String TAG = FiveStarsDialog.class.getSimpleName();
     private final Context context;
-    private boolean isForceMode = false;
     private final SharedPreferences sharedPrefs;
+    private boolean isForceMode = false;
     private String supportEmail;
     private TextView contentTextView;
     private RatingBar ratingBar;
@@ -41,6 +41,9 @@ public class FiveStarsDialog implements DialogInterface.OnClickListener {
     private int upperBound = 4;
     private NegativeReviewListener negativeReviewListener;
     private ReviewListener reviewListener;
+    private AlertDialog.OnShowListener dialogShownListener;
+    private AlertDialog.OnDismissListener dismissListener;
+    private DialogNotShownListener dialogNotShownListener;
     private int starColor;
 
     public FiveStarsDialog(Context context, String supportEmail) {
@@ -82,6 +85,13 @@ public class FiveStarsDialog implements DialogInterface.OnClickListener {
                 .setPositiveButton(DEFAULT_POSITIVE, this)
                 .setNeutralButton(DEFAULT_NEVER, this)
                 .create();
+
+        if (dialogShownListener != null) {
+            alertDialog.setOnShowListener(dialogShownListener);
+        }
+        if (dismissListener != null) {
+            alertDialog.setOnDismissListener(dismissListener);
+        }
     }
 
     private void disable() {
@@ -114,6 +124,13 @@ public class FiveStarsDialog implements DialogInterface.OnClickListener {
         if (!disabled) {
             build();
             alertDialog.show();
+            if (dismissListener != null) {
+                alertDialog.setOnDismissListener(dismissListener);
+            }
+        } else {
+            if (dialogNotShownListener != null) {
+                dialogNotShownListener.onDialogNotShown();
+            }
         }
     }
 
@@ -125,6 +142,10 @@ public class FiveStarsDialog implements DialogInterface.OnClickListener {
         editor.apply();
         if (numOfAccess + 1 >= numberOfAccess) {
             show();
+        } else {
+            if (dialogNotShownListener != null) {
+                dialogNotShownListener.onDialogNotShown();
+            }
         }
     }
 
@@ -211,6 +232,22 @@ public class FiveStarsDialog implements DialogInterface.OnClickListener {
         this.negativeReviewListener = listener;
         return this;
     }
+
+    public FiveStarsDialog setOnDialogShownListener(AlertDialog.OnShowListener listener) {
+        this.dialogShownListener = listener;
+        return this;
+    }
+
+    public FiveStarsDialog setOnDismissListener(AlertDialog.OnDismissListener listener) {
+        this.dismissListener = listener;
+        return this;
+    }
+
+    public FiveStarsDialog setDialogNotShownListener(DialogNotShownListener listener) {
+        this.dialogNotShownListener = listener;
+        return this;
+    }
+
 
     /**
      * Set a listener to get notified when a review (positive or negative) is issued, for example for tracking purposes
